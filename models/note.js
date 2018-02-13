@@ -5,9 +5,11 @@ const mongoose = require('mongoose');
 const noteSchema = mongoose.Schema({
   title: String,
   content: String,
-  create: Date.now
+  create: {
+    type: Date,
+    default: Date.now}
 });
 
 const Note = mongoose.model('Note', noteSchema);
 
-module.exports = {Note};
+module.exports = Note;

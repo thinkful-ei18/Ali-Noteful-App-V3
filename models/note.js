@@ -2,13 +2,13 @@
 
 const mongoose = require('mongoose');
 
-const noteSchema = mongoose.Schema({
-  title: String,
+const noteSchema = new mongoose.Schema({
+  title: { type: String, index: true },
   content: String,
-  create: {
-    type: Date,
-    default: Date.now}
+  created: { type: Date, default: Date.now },
 });
+
+noteSchema.index({ title: 'text', content: 'text' });
 
 noteSchema.methods.serialize = function () {
 

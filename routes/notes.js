@@ -16,8 +16,21 @@ router.use(bodyParser.json());
 
 /* ========== GET/READ ALL ITEM ========== */
 router.get('/notes', (req, res, next) => {   
+  const { searchTerm } = req.query;
+
+  let filter = {};
+  let projection = {};
+  let sort = 'created'; // default sorting
+
+  if (searchTerm) {
+    filter.$text = { $search: searchTerm };
+    projection.score = { $meta: 'textScore' };
+    sort = projection;
+  }
   Note
-    .find()
+    .find(filter, projection)
+    .select('title content created')
+    .sort(sort)
     .then(notes => {
       res.json(notes);
     })

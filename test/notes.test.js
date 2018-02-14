@@ -179,6 +179,86 @@ describe('Before and After hooks', function () {
     });
   });
 
+  // describe('PUT /v2/notes/:id', function () {
+
+  //   it('should update the note', function () {
+  //     const updateItem = {
+  //       'title': 'What about dogs?!',
+  //       'content': 'woof woof',
+  //       'tags': []
+  //     };
+  //     return chai.request(app)
+  //       .put('/v2/notes/1005')
+  //       .send(updateItem)
+  //       .then(function (res) {
+  //         expect(res).to.have.status(200);
+  //         expect(res).to.be.json;
+  //         expect(res.body).to.be.a('object');
+  //         expect(res.body).to.include.keys('id', 'title', 'content');
+
+  //         expect(res.body.id).to.equal(1005);
+  //         expect(res.body.title).to.equal(updateItem.title);
+  //         expect(res.body.content).to.equal(updateItem.content);
+  //       });
+  //   });
+
+  //   it('should respond with a 404 for an invalid id', function () {
+  //     const updateItem = {
+  //       'title': 'What about dogs?!',
+  //       'content': 'woof woof',
+  //       'tags': []
+  //     };
+  //     const spy = chai.spy();
+  //     return chai.request(app)
+  //       .put('/v2/notes/9999')
+  //       .send(updateItem)
+  //       .then(spy)
+  //       .then(() => {
+  //         expect(spy).to.not.have.been.called();
+  //       })
+  //       .catch(err => {
+  //         expect(err.response).to.have.status(404);
+  //       });
+  //   });
+
+  //   it('should return an error when missing "title" field', function () {
+  //     const updateItem = {
+  //       'foo': 'bar'
+  //     };
+  //     const spy = chai.spy();
+  //     return chai.request(app)
+  //       .put('/v2/notes/9999')
+  //       .send(updateItem)
+  //       .then(spy)
+  //       .then(() => {
+  //         expect(spy).to.not.have.been.called();
+  //       })
+  //       .catch(err => {
+  //         const res = err.response;
+  //         expect(res).to.have.status(400);
+  //         expect(res).to.be.json;
+  //         expect(res.body).to.be.a('object');
+  //         expect(res.body.message).to.equal('Missing `title` in request body');
+  //       });
+  //   });
+
+  // });
+
+  describe('DELETE /v3/notes', function () {
+    it('should permanently delete an item', function () {
+      return chai.request(app)
+        .delete('/v3/notes/000000000000000000000001')
+        .then(function (res) {
+          expect(res).to.have.status(204);
+          return Note.findById('000000000000000000000001');
+        })
+        .then(data => {
+          expect(data).to.be.null;
+        });
+    });
+
+
+  });
 
 });
 

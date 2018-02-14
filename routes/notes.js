@@ -17,7 +17,6 @@ router.use(bodyParser.json());
 /* ========== GET/READ ALL ITEM ========== */
 router.get('/notes', (req, res, next) => {   
   const { searchTerm } = req.query;
-
   let filter = {};
   let projection = {};
   let sort = 'created'; // default sorting
@@ -27,6 +26,7 @@ router.get('/notes', (req, res, next) => {
     projection.score = { $meta: 'textScore' };
     sort = projection;
   }
+  
   Note
     .find(filter, projection)
     .select('title content created')
@@ -34,22 +34,20 @@ router.get('/notes', (req, res, next) => {
     .then(notes => {
       res.json(notes);
     })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ message: 'Internal server error' });
-    });
+    .catch(next);
 });
 
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/notes/:id', (req, res, next) => {
   Note
     .findById(req.params.id)
+    .select('title content')
     .then(notes => {
       res.json(notes);
     })
     .catch(err => {
       console.error(err);
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(400).json({ message: 'The `id` is not valid' });
     })
     .catch(next);
 });
@@ -63,7 +61,7 @@ router.post('/notes', (req, res, next) => {
     if (!(field in req.body)) {
       const message = `Missing \`${field}\` in request body`;
       console.error(message);
-      return res.status(400).send(message);
+      res.status(400).json({ message: `Missing \`${field}\` in request body` });
     }
   }
   
@@ -72,7 +70,7 @@ router.post('/notes', (req, res, next) => {
       title: req.body.title,
       content: req.body.content,
     })
-    .then(note => res.status(201).json(note.serialize()))
+    .then(note => res.status(201).location(`${req.originalUrl}/${note.id}`).json(note.serialize()))
     .catch(err => {
       console.error(err);
       res.status(500).json({ message: 'Internal server error' });

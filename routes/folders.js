@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Folder = require('../models/folder');
+const Note = require('../models/note');
 
 
 /* ========== GET/READ ALL ITEM ========== */
@@ -12,12 +13,6 @@ router.get('/folders', (req, res, next) => {
   let filter = {};
   let projection = {};
   let sort = 'created'; // default sorting
-
-  if (searchTerm) {
-    filter.$text = { $search: searchTerm };
-    projection.score = { $meta: 'textScore' };
-    sort = projection;
-  }
 
   Folder
     .find(filter, projection)
@@ -63,8 +58,9 @@ router.post('/folders', (req, res, next) => {
   for (let i = 0; i < requiredFields.length; i++) {
     const field = requiredFields[i];
     if (!(field in req.body)) {
-      const message = `Missing \`${field}\` in request body`;
-      res.status(400).json({ message: `Missing \`${field}\` in request body` });
+      const err = new Error(`Missing \`${field}\` in request body`);
+      err.status = 400;
+      return next(err);
     }
   }
   
@@ -121,12 +117,32 @@ router.put('/folders/:id', (req, res, next) => {
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/folders/:id', (req, res, next) => {
 
-  Folder
-    .findByIdAndRemove(req.params.id)
-    .then(() => {
-      res.status(204).end();
+// THIS SETS NOTE FOLDERID TO NULL
+  // Folder
+  //   .findByIdAndRemove(req.params.id)
+  //   .then(() => {
+  //     return  Note
+  //       .update({ folderId: req.params.id }, { $set: { folderId: null } }, {multi: true});
+  //   })
+  //   .then(() => res.status(204).end())
+  //   .catch(next);
+
+  Note
+    .find({folderId : req.params.id})
+    .then((res) => {
+      if(res.length > 0) {
+        const err = new Error('Folder is being used by other notes');
+        err.status = 400;
+        return next(err);
+      }
     })
+    .then(() => {
+      return Folder
+        .findByIdAndRemove(req.params.id);
+    })
+    .then(() => res.status(204).end())
     .catch(next);
+
 
 });
 

@@ -1,14 +1,13 @@
 language: node_js
 node_js: node
 env:
-  - NODE_ENV=test
+- NODE_ENV=test
 services:
-  - mongodb 
-  
-# deploy:
-#   provider: heroku
-#   api_key:
-#     secure: [YOUR-API-KEY]
-#   app: [YOUR-APP-NAME]
-#   on:
-#     repo: [YOUR-APP-REPO]
+- mongodb
+deploy:
+  provider: heroku
+  api_key:
+    secure: MPci5DHkooLRm8/7/U4XDJV92pda1L+KAJTxG8crPq7InY6jYtw0V2yD4uM/kApEb80SvUbXzfYVSE7TxbMqg+QFoabsvygfXPUfRsAfn4F9V9KHf+sdVBBZhdhUPjz95YAvWXYkVhSeWWbEnk5g4XWvtMzTJAKmiiDBezJmIuv2RmYzNL+yO1r8ljRv3oaHTzT6XImH+TlHZk7bzEp54wlQ/ZzF3fv5XWPLhvcI50wHQQMz04EZkr4+U+KRebyzzr2hOUJ6ik7kqFZRCURaGiMBgTF0DviaY1TkPKkRMyZAosaMP1O5BVEf323NckNlfO82eqK7RymJWH1rKvXBZXnPIDycvq0sGk5QXlOYoscPCh0MtvtMU5FfVXkwD5VlBny3rliBQaQTyzVHAeMrus+FpfniwCh+bZsdvk4L8HHUN3tKzV5GBZiz5opWDWE877P0pwKN+wNaaR7DIAmOOrXypIoH0NO1ifwvQluvsP6mHSv0I6ojD8xPz7U6V8BxDMbrefBDqcV5YvSiE61n462OqhHZlQ3VA/+/gTphjfK6YGCWjfNIPpFL6NgCZNbuO/K7fzNxRHWYZ3dXxzNE7JGiOQg4si2WrKtew1dKPdzpbapTn/5yql+Hy1nBekmTzuZW+ZXo1nKBZbQpDyu5Y75Bj2JyWLR12JIm5ijFDro=
+  app: notefulv3
+  on:
+    repo: thinkful-ei18/Ali-Noteful-App-V3

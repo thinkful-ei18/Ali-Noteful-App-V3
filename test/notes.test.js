@@ -65,23 +65,6 @@ describe('Before and After hooks', function () {
         });
     });
     
-    // it('should return an error with status 500 when error occurs', function () {
-    //   const spy = chai.spy();
-    //   return chai.request(app)
-    //     .get('/v3/notes/')
-    //     // .then(() => {
-    //     //   return new Error('Internal server error');
-    //     // })
-    //     .then(spy)
-    //     .then(() => {
-    //       expect(spy).to.not.have.been.called();
-    //     })
-    //     .catch(err => {
-    //       const res = err.response;
-    //       expect(res).to.have.status(500);
-    //       expect(res.body.message).to.eq('Internal server error');
-    //     });
-    // });
       
   });
 
@@ -179,70 +162,54 @@ describe('Before and After hooks', function () {
     });
   });
 
-  // describe('PUT /v2/notes/:id', function () {
+  describe('PUT /v3/notes/:id', function () {
+    
+    it('should update the note', function () {
+      let body;
+      const updateItem = {
+        'id': '000000000000000000000000',
+        'title': 'What about dogs?!',
+        'content': 'woof woof'
+      };
+      return chai.request(app)
+        .put('/v3/notes/000000000000000000000000')
+        .send(updateItem)
+        .then(function (res) {
+          body = res.body;
+          expect(res).to.have.status(200);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('object');
+          expect(res.body).to.include.keys('id', 'title', 'content');
+          return Note.findById(body.id);
+        })
+        .then(data => {
+          expect(body.title).to.equal(data.title);
+          expect(body.content).to.equal(data.content);
+          expect(body.id).to.equal(data.id);
+        });
+    });
 
-  //   it('should update the note', function () {
-  //     const updateItem = {
-  //       'title': 'What about dogs?!',
-  //       'content': 'woof woof',
-  //       'tags': []
-  //     };
-  //     return chai.request(app)
-  //       .put('/v2/notes/1005')
-  //       .send(updateItem)
-  //       .then(function (res) {
-  //         expect(res).to.have.status(200);
-  //         expect(res).to.be.json;
-  //         expect(res.body).to.be.a('object');
-  //         expect(res.body).to.include.keys('id', 'title', 'content');
+    it('should return an error when not provided with a matching id', function () {
+      const updateItem = {
+        'id': '000000000000000000000001',
+        'title': 'What about dogs?!',
+        'content': 'woof woof'
+      };
+      const id = '000000000000000000000000';
+      return chai.request(app)
+        .put(`/v3/notes/${id}`)
+        .send(updateItem)
+        .catch(function (res) {
+          expect(res).to.have.status(400);
+          expect(res).to.be.a('error');
+          expect(res.response.body.message).to.equal(`Request path id (${id}) and request body id (${updateItem.id}) must match`);
+        });
+    });
 
-  //         expect(res.body.id).to.equal(1005);
-  //         expect(res.body.title).to.equal(updateItem.title);
-  //         expect(res.body.content).to.equal(updateItem.content);
-  //       });
-  //   });
 
-  //   it('should respond with a 404 for an invalid id', function () {
-  //     const updateItem = {
-  //       'title': 'What about dogs?!',
-  //       'content': 'woof woof',
-  //       'tags': []
-  //     };
-  //     const spy = chai.spy();
-  //     return chai.request(app)
-  //       .put('/v2/notes/9999')
-  //       .send(updateItem)
-  //       .then(spy)
-  //       .then(() => {
-  //         expect(spy).to.not.have.been.called();
-  //       })
-  //       .catch(err => {
-  //         expect(err.response).to.have.status(404);
-  //       });
-  //   });
+  
 
-  //   it('should return an error when missing "title" field', function () {
-  //     const updateItem = {
-  //       'foo': 'bar'
-  //     };
-  //     const spy = chai.spy();
-  //     return chai.request(app)
-  //       .put('/v2/notes/9999')
-  //       .send(updateItem)
-  //       .then(spy)
-  //       .then(() => {
-  //         expect(spy).to.not.have.been.called();
-  //       })
-  //       .catch(err => {
-  //         const res = err.response;
-  //         expect(res).to.have.status(400);
-  //         expect(res).to.be.json;
-  //         expect(res.body).to.be.a('object');
-  //         expect(res.body.message).to.equal('Missing `title` in request body');
-  //       });
-  //   });
-
-  // });
+  });
 
   describe('DELETE /v3/notes', function () {
     it('should permanently delete an item', function () {

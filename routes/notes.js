@@ -46,7 +46,6 @@ router.get('/notes/:id', (req, res, next) => {
       res.json(notes);
     })
     .catch(err => {
-      console.error(err);
       res.status(400).json({ message: 'The `id` is not valid' });
     })
     .catch(next);
@@ -60,7 +59,6 @@ router.post('/notes', (req, res, next) => {
     const field = requiredFields[i];
     if (!(field in req.body)) {
       const message = `Missing \`${field}\` in request body`;
-      console.error(message);
       res.status(400).json({ message: `Missing \`${field}\` in request body` });
     }
   }
@@ -85,7 +83,6 @@ router.put('/notes/:id', (req, res, next) => {
     const message = (
       `Request path id (${req.params.id}) and request body id ` +
       `(${req.body.id}) must match`);
-    console.error(message);
     return res.status(400).json({ message: message });
   }
 
@@ -99,11 +96,11 @@ router.put('/notes/:id', (req, res, next) => {
   });
 
   Note
-    .findByIdAndUpdate(req.params.id, { $set: toUpdate })
+    .findByIdAndUpdate(req.params.id, { $set: toUpdate }, {new: true})
+    .select('title content id')
     .then(note => {
-      res.status(204).json(note.serialize()).end();
+      res.json(note);
     })
-    .catch(err => res.status(500).json({ message: 'Internal server error' }))
     .catch(next);
 });
 
@@ -114,8 +111,7 @@ router.delete('/notes/:id', (req, res, next) => {
     .then(() => {
       Note
         .findByIdAndRemove(req.params.id)
-        .then(note => res.status(204).end())
-        .catch(err => res.status(500).json({ message: 'Internal server error' }));
+        .then(note => res.status(204).end());
     })
     .catch(next);
 });

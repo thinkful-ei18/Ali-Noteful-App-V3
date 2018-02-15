@@ -3,7 +3,7 @@
 const mongoose = require('mongoose');
 
 const folderSchema = new mongoose.Schema({
-  name: { type: String, index: true },
+  name: { type: String, index: true, unique: true },
 });
 
 folderSchema.index({ name: 'text'});
@@ -12,7 +12,7 @@ folderSchema.methods.serialize = function () {
 
   return {
     id: this._id,
-    name: this.content
+    name: this.name
   };
 };
 

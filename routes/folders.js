@@ -32,22 +32,34 @@ router.get('/folders', (req, res, next) => {
 
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/folders/:id', (req, res, next) => {
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    const err = new Error(`${req.params.id} is not a valid ID`);
+    err.status = 400;
+    return next(err);
+  }
+
+
   Folder
     .findById(req.params.id)
     .select('name id')
     .then(folders => {
-      res.json(folders);
-    })
-    .catch(err => {
-      res.status(404).json({ message: 'The `id` is not valid', status: 404 });
+      if (folders) {
+        res.json(folders);
+      }
+      else {
+        const err = new Error(`${req.params.id} is not a valid ID`);
+        err.status = 404;
+        return next(err);
+      }
     })
     .catch(next);
 });
 
 /* ========== POST/CREATE AN ITEM ========== */
-router.post('/notes', (req, res, next) => {
+router.post('/folders', (req, res, next) => {
   //Check if required fields present
-  const requiredFields = ['title', 'content'];
+  const requiredFields = ['name'];
   for (let i = 0; i < requiredFields.length; i++) {
     const field = requiredFields[i];
     if (!(field in req.body)) {
@@ -55,58 +67,67 @@ router.post('/notes', (req, res, next) => {
       res.status(400).json({ message: `Missing \`${field}\` in request body` });
     }
   }
-
-  Note
+  
+  Folder
     .create({
-      title: req.body.title,
-      content: req.body.content,
+      name: req.body.name,
     })
-    .then(note => res.status(201).location(`${req.originalUrl}/${note.id}`).json(note.serialize()))
+    .then(folder => res.status(201).location(`${req.originalUrl}${folder.id}`).json(folder))
     .catch(err => {
-      console.error(err);
-      res.status(500).json({ message: 'Internal server error' });
-    })
-    .catch(next);
+      if (err.code === 11000) {
+        err = new Error('The folder name already exists');
+        err.status = 400;
+      }
+      next(err);
+    });
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
-router.put('/notes/:id', (req, res, next) => {
+router.put('/folders/:id', (req, res, next) => {
 
-  if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
-    const message = (
-      `Request path id (${req.params.id}) and request body id ` +
-      `(${req.body.id}) must match`);
-    return res.status(400).json({ message: message });
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    const err = new Error(`${req.params.id} is not a valid ID`);
+    err.status = 400;
+    return next(err);
   }
 
-  const toUpdate = {};
-  const updateableFields = ['title', 'content'];
+  if (req.params.id !== req.body.id) {
+    const err = new Error('Params id and body id must match');
+    err.status = 400;
+    return next(err);
+  }
 
-  updateableFields.forEach(field => {
-    if (field in req.body) {
-      toUpdate[field] = req.body[field];
-    }
-  });
+  if (!req.body.name) {
+    const err = new Error('Name must be present in body');
+    err.status = 400;
+    return next(err);
+  }
+  const toUpdate = {
+    name: req.body.name,
+  };
 
-  Note
-    .findByIdAndUpdate(req.params.id, { $set: toUpdate }, { new: true })
-    .select('title content id')
-    .then(note => {
-      res.json(note);
-    })
-    .catch(next);
+  Folder
+    .findByIdAndUpdate(req.params.id, {$set: toUpdate}, {new: true})
+    .then(folder => res.json(folder))
+    .catch(err => {
+      if (err.code === 11000) {
+        err = new Error('The folder name already exists');
+        err.status = 400;
+      }
+      next(err);
+    });
 });
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
-router.delete('/notes/:id', (req, res, next) => {
-  Note
-    .findById(req.params.id)
+router.delete('/folders/:id', (req, res, next) => {
+
+  Folder
+    .findByIdAndRemove(req.params.id)
     .then(() => {
-      Note
-        .findByIdAndRemove(req.params.id)
-        .then(note => res.status(204).end());
+      res.status(204).end();
     })
     .catch(next);
+
 });
 
 module.exports = router;

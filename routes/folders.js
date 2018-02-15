@@ -3,13 +3,11 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-mongoose.Promise = global.Promise;
-
-const Note = require('../models/note');
+const Folder = require('../models/folder');
 
 
 /* ========== GET/READ ALL ITEM ========== */
-router.get('/notes', (req, res, next) => {   
+router.get('/folders', (req, res, next) => {
   const { searchTerm } = req.query;
   let filter = {};
   let projection = {};
@@ -20,27 +18,28 @@ router.get('/notes', (req, res, next) => {
     projection.score = { $meta: 'textScore' };
     sort = projection;
   }
-  
-  Note
+
+  Folder
     .find(filter, projection)
-    .select('title content created')
+    .select('name id')
     .sort(sort)
-    .then(notes => {
-      res.json(notes);
+    .then(folders => {
+      res.json(folders);
     })
     .catch(next);
 });
 
+
 /* ========== GET/READ A SINGLE ITEM ========== */
-router.get('/notes/:id', (req, res, next) => {
-  Note
+router.get('/folders/:id', (req, res, next) => {
+  Folder
     .findById(req.params.id)
-    .select('title content')
-    .then(notes => {
-      res.json(notes);
+    .select('name id')
+    .then(folders => {
+      res.json(folders);
     })
     .catch(err => {
-      res.status(400).json({ message: 'The `id` is not valid' });
+      res.status(404).json({ message: 'The `id` is not valid', status: 404 });
     })
     .catch(next);
 });
@@ -56,7 +55,7 @@ router.post('/notes', (req, res, next) => {
       res.status(400).json({ message: `Missing \`${field}\` in request body` });
     }
   }
-  
+
   Note
     .create({
       title: req.body.title,
@@ -90,7 +89,7 @@ router.put('/notes/:id', (req, res, next) => {
   });
 
   Note
-    .findByIdAndUpdate(req.params.id, { $set: toUpdate }, {new: true})
+    .findByIdAndUpdate(req.params.id, { $set: toUpdate }, { new: true })
     .select('title content id')
     .then(note => {
       res.json(note);

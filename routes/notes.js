@@ -10,20 +10,21 @@ const Note = require('../models/note');
 
 /* ========== GET/READ ALL ITEM ========== */
 router.get('/notes', (req, res, next) => {   
-  const { searchTerm } = req.query;
-  let filter = {};
+  const { searchTerm, folderId  } = req.query;
+
+  let filter = (folderId) ? { folderId} : {};
   let projection = {};
-  let sort = 'created'; // default sorting
+  let sort = 'created'; 
 
   if (searchTerm) {
     filter.$text = { $search: searchTerm };
     projection.score = { $meta: 'textScore' };
     sort = projection;
   }
-  
+
   Note
     .find(filter, projection)
-    .select('title content created')
+    .select('title content created folderId')
     .sort(sort)
     .then(notes => {
       res.json(notes);
@@ -35,7 +36,7 @@ router.get('/notes', (req, res, next) => {
 router.get('/notes/:id', (req, res, next) => {
   Note
     .findById(req.params.id)
-    .select('title content')
+    .select('title content folderId')
     .then(notes => {
       res.json(notes);
     })
@@ -57,12 +58,16 @@ router.post('/notes', (req, res, next) => {
     }
   }
   
+  let obj = {
+    title: req.body.title,
+    content: req.body.content,
+  };
+
+  (req.body.folderId) ? obj.folderId = req.body.folderId : obj;
+
   Note
-    .create({
-      title: req.body.title,
-      content: req.body.content,
-    })
-    .then(note => res.status(201).location(`${req.originalUrl}/${note.id}`).json(note.serialize()))
+    .create(obj)
+    .then(note => res.status(201).location(`${req.originalUrl}/${note.id}`).json(note))
     .catch(err => {
       console.error(err);
       res.status(500).json({ message: 'Internal server error' });
@@ -89,9 +94,11 @@ router.put('/notes/:id', (req, res, next) => {
     }
   });
 
+  (req.body.folderId) ? toUpdate.folderId = req.body.folderId : toUpdate;
+
   Note
     .findByIdAndUpdate(req.params.id, { $set: toUpdate }, {new: true})
-    .select('title content id')
+    .select('title content id folderId')
     .then(note => {
       res.json(note);
     })

@@ -11,14 +11,7 @@ const noteSchema = new mongoose.Schema({
 
 noteSchema.index({ title: 'text', content: 'text' });
 
-noteSchema.methods.serialize = function () {
 
-  return {
-    id: this._id,
-    title: this.title,
-    content: this.content
-  };
-};
 
 noteSchema.set('toObject', {
   transform: function (doc, ret) {

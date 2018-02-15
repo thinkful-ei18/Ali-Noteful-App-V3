@@ -8,13 +8,7 @@ const folderSchema = new mongoose.Schema({
 
 folderSchema.index({ name: 'text'});
 
-folderSchema.methods.serialize = function () {
 
-  return {
-    id: this._id,
-    name: this.name
-  };
-};
 
 folderSchema.set('toObject', {
   transform: function (doc, ret) {

@@ -99,7 +99,8 @@ describe('Before and After hooks', function () {
       const newItem = {
         'title': 'The best article about cats ever!',
         'content': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor...',
-        'tags': []
+        'tags': [],
+        'folderId': '111111111111111111111101'
       };
       let body;
       // 1) First, call the API
@@ -112,7 +113,7 @@ describe('Before and After hooks', function () {
           expect(res).to.have.header('location');
           expect(res).to.be.json;
           expect(body).to.be.a('object');
-          expect(body).to.include.keys('id', 'title', 'content');
+          expect(body).to.include.keys('id', 'title', 'content', 'folderId');
           // 2) **then** call the database
           return Note.findById(body.id);
         })
@@ -169,7 +170,8 @@ describe('Before and After hooks', function () {
       const updateItem = {
         'id': '000000000000000000000000',
         'title': 'What about dogs?!',
-        'content': 'woof woof'
+        'content': 'woof woof',
+        'folderId': '111111111111111111111101'
       };
       return chai.request(app)
         .put('/v3/notes/000000000000000000000000')
@@ -179,7 +181,7 @@ describe('Before and After hooks', function () {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body).to.include.keys('id', 'title', 'content');
+          expect(res.body).to.include.keys('id', 'title', 'content', 'folderId');
           return Note.findById(body.id);
         })
         .then(data => {

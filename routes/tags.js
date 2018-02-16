@@ -3,30 +3,30 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const Folder = require('../models/folder');
+const Tag = require('../models/tag');
 const Note = require('../models/note');
 
 
 /* ========== GET/READ ALL ITEM ========== */
-router.get('/folders', (req, res, next) => {
+router.get('/Tags', (req, res, next) => {
   const { searchTerm } = req.query;
   let filter = {};
   let projection = {};
   let sort = 'created'; // default sorting
 
-  Folder
+  Tag
     .find(filter, projection)
     .select('name id')
     .sort(sort)
-    .then(folders => {
-      res.json(folders);
+    .then(Tags => {
+      res.json(Tags);
     })
     .catch(next);
 });
 
 
 /* ========== GET/READ A SINGLE ITEM ========== */
-router.get('/folders/:id', (req, res, next) => {
+router.get('/Tags/:id', (req, res, next) => {
 
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     const err = new Error(`${req.params.id} is not a valid ID`);
@@ -35,12 +35,12 @@ router.get('/folders/:id', (req, res, next) => {
   }
 
 
-  Folder
+  Tag
     .findById(req.params.id)
     .select('name id')
-    .then(folders => {
-      if (folders) {
-        res.json(folders);
+    .then(Tags => {
+      if (Tags) {
+        res.json(Tags);
       }
       else {
         const err = new Error(`${req.params.id} is not a valid ID`);
@@ -52,7 +52,7 @@ router.get('/folders/:id', (req, res, next) => {
 });
 
 /* ========== POST/CREATE AN ITEM ========== */
-router.post('/folders', (req, res, next) => {
+router.post('/Tags', (req, res, next) => {
   //Check if required fields present
   const requiredFields = ['name'];
   for (let i = 0; i < requiredFields.length; i++) {
@@ -63,15 +63,15 @@ router.post('/folders', (req, res, next) => {
       return next(err);
     }
   }
-  
-  Folder
+
+  Tag
     .create({
       name: req.body.name,
     })
-    .then(folder => res.status(201).location(`${req.originalUrl}${folder.id}`).json(folder))
+    .then(Tag => res.status(201).location(`${req.originalUrl}${Tag.id}`).json(Tag))
     .catch(err => {
       if (err.code === 11000) {
-        err = new Error('The folder name already exists');
+        err = new Error('The Tag name already exists');
         err.status = 400;
       }
       next(err);
@@ -79,7 +79,7 @@ router.post('/folders', (req, res, next) => {
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
-router.put('/folders/:id', (req, res, next) => {
+router.put('/Tags/:id', (req, res, next) => {
 
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     const err = new Error(`${req.params.id} is not a valid ID`);
@@ -102,12 +102,12 @@ router.put('/folders/:id', (req, res, next) => {
     name: req.body.name,
   };
 
-  Folder
-    .findByIdAndUpdate(req.params.id, {$set: toUpdate}, {new: true})
-    .then(folder => res.json(folder))
+  Tag
+    .findByIdAndUpdate(req.params.id, { $set: toUpdate }, { new: true })
+    .then(Tag => Tag ? res.json(Tag) : next(Tag))
     .catch(err => {
       if (err.code === 11000) {
-        err = new Error('The folder name already exists');
+        err = new Error('The Tag name already exists');
         err.status = 400;
       }
       next(err);
@@ -115,33 +115,38 @@ router.put('/folders/:id', (req, res, next) => {
 });
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
-router.delete('/folders/:id', (req, res, next) => {
+router.delete('/Tags/:id', (req, res, next) => {
 
-// // THIS SETS NOTE FOLDERID TO NULL
-//   Folder
-//     .findByIdAndRemove(req.params.id)
-//     .then(() => {
-//       return  Note
-//         .update({ folderId: req.params.id }, { $set: { folderId: null } }, {multi: true});
-//     })
-//     .then(() => res.status(204).end())
-//     .catch(next);
 
-  Note
-    .find({folderId : req.params.id})
-    .then((res) => {
-      if(res.length > 0) {
-        const err = new Error('Folder is being used by other notes');
-        err.status = 400;
-        return next(err);
-      }
-    })
+  Tag
+    .findByIdAndRemove(req.params.id)
     .then(() => {
-      return Folder
-        .findByIdAndRemove(req.params.id);
+      return  Note
+        .update({},
+          { $pull: { tags: req.params.id} },
+          { multi: true }
+        );
     })
     .then(() => res.status(204).end())
     .catch(next);
+
+  
+
+  // Note
+  //   .find({ TagId: req.params.id })
+  //   .then((res) => {
+  //     if (res.length > 0) {
+  //       const err = new Error('Tag is being used by other notes');
+  //       err.status = 400;
+  //       return next(err);
+  //     }
+  //   })
+  //   .then(() => {
+  //     return Tag
+  //       .findByIdAndRemove(req.params.id);
+  //   })
+  //   .then(() => res.status(204).end())
+  //   .catch(next);
 
 
 });

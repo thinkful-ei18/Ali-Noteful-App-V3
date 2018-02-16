@@ -24,7 +24,8 @@ router.get('/notes', (req, res, next) => {
 
   Note
     .find(filter, projection)
-    .select('title content created folderId')
+    .populate({path: 'tags', select: 'id'})
+    .select('title content created folderId tags')
     .sort(sort)
     .then(notes => {
       res.json(notes);
@@ -36,7 +37,8 @@ router.get('/notes', (req, res, next) => {
 router.get('/notes/:id', (req, res, next) => {
   Note
     .findById(req.params.id)
-    .select('title content folderId')
+    .populate({path: 'tags', select: 'id'})
+    .select('title content folderId tags')
     .then(notes => {
       res.json(notes);
     })
@@ -57,11 +59,20 @@ router.post('/notes', (req, res, next) => {
       res.status(400).json({ message: `Missing \`${field}\` in request body` });
     }
   }
-  
+
   let obj = {
     title: req.body.title,
     content: req.body.content,
+    tags: (req.body.tags) ? req.body.tags : []
   };
+
+  obj.tags.forEach(val => {
+    if (!mongoose.Types.ObjectId.isValid(val)) {
+      const err = new Error(`${val} is not a valid ID for a tag`);
+      err.status = 400;
+      return next(err);
+    }
+  });
 
   (req.body.folderId) ? obj.folderId = req.body.folderId : obj;
 
@@ -84,9 +95,10 @@ router.put('/notes/:id', (req, res, next) => {
       `(${req.body.id}) must match`);
     return res.status(400).json({ message: message });
   }
+  
 
   const toUpdate = {};
-  const updateableFields = ['title', 'content'];
+  const updateableFields = ['title', 'content', 'tags'];
 
   updateableFields.forEach(field => {
     if (field in req.body) {
@@ -96,9 +108,17 @@ router.put('/notes/:id', (req, res, next) => {
 
   (req.body.folderId) ? toUpdate.folderId = req.body.folderId : toUpdate;
 
+  toUpdate.tags.forEach(val => {
+    if (!mongoose.Types.ObjectId.isValid(val)) {
+      const err = new Error(`${val} is not a valid ID for a tag`);
+      err.status = 400;
+      return next(err);
+    }
+  });
+
   Note
     .findByIdAndUpdate(req.params.id, { $set: toUpdate }, {new: true})
-    .select('title content id folderId')
+    .select('title content id folderId tags')
     .then(note => {
       res.json(note);
     })

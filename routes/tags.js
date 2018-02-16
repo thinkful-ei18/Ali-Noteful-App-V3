@@ -129,26 +129,6 @@ router.delete('/Tags/:id', (req, res, next) => {
     })
     .then(() => res.status(204).end())
     .catch(next);
-
-  
-
-  // Note
-  //   .find({ TagId: req.params.id })
-  //   .then((res) => {
-  //     if (res.length > 0) {
-  //       const err = new Error('Tag is being used by other notes');
-  //       err.status = 400;
-  //       return next(err);
-  //     }
-  //   })
-  //   .then(() => {
-  //     return Tag
-  //       .findByIdAndRemove(req.params.id);
-  //   })
-  //   .then(() => res.status(204).end())
-  //   .catch(next);
-
-
 });
 
 module.exports = router;

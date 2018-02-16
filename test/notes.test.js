@@ -84,7 +84,7 @@ describe('Before and After hooks', function () {
           expect(res).to.be.json;
 
           expect(res.body).to.be.an('object');
-          expect(res.body).to.have.keys('id', 'title', 'content', 'folderId');
+          expect(res.body).to.have.keys('id', 'title', 'content', 'folderId', 'tags');
 
           // 3) **then** compare
           expect(res.body.id).to.equal(data.id);
@@ -144,6 +144,29 @@ describe('Before and After hooks', function () {
         });
     });
 
+    it('should return an error when missing invalid id for tags is provided', function () {
+      const newItem = {
+        'title': 'The best article about cats ever!',
+        'content': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor...',
+        'tags': ['2222222222222222222222022'],
+        'folderId': '111111111111111111111101'
+      };
+      const spy = chai.spy();
+      return chai.request(app)
+        .post('/v3/notes')
+        .send(newItem)
+        .then(spy)
+        .then(() => {
+          expect(spy).to.not.have.been.called();
+        })
+        .catch((err) => {
+          const res = err.response;
+          expect(res).to.have.status(400);
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('2222222222222222222222022 is not a valid ID for a tag');
+        });
+    });
+
   });
 
   describe('GET /v3/notes', function () {
@@ -171,7 +194,8 @@ describe('Before and After hooks', function () {
         'id': '000000000000000000000000',
         'title': 'What about dogs?!',
         'content': 'woof woof',
-        'folderId': '111111111111111111111101'
+        'folderId': '111111111111111111111101',
+        'tags': ['222222222222222222222200']
       };
       return chai.request(app)
         .put('/v3/notes/000000000000000000000000')
@@ -188,6 +212,7 @@ describe('Before and After hooks', function () {
           expect(body.title).to.equal(data.title);
           expect(body.content).to.equal(data.content);
           expect(body.id).to.equal(data.id);
+          expect(body.tags[0]).to.equal(`${data.tags[0]}`);
         });
     });
 
@@ -208,6 +233,25 @@ describe('Before and After hooks', function () {
         });
     });
 
+    it('should return an error when missing invalid id for tags is provided', function () {
+      const newItem = {
+        'id': '000000000000000000000001',
+        'title': 'The best article about cats ever!',
+        'content': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor...',
+        'tags': ['2222222222222222222222022'],
+        'folderId': '111111111111111111111101'
+      };
+      const id = '000000000000000000000001';
+      return chai.request(app)
+        .put(`/v3/notes/${id}`)
+        .send(newItem)
+        .catch((err) => {
+          const res = err.response;
+          expect(res).to.have.status(400);
+          expect(res.body).to.be.a('object');
+          expect(res.body.message).to.equal('2222222222222222222222022 is not a valid ID for a tag');
+        });
+    });
 
   
 

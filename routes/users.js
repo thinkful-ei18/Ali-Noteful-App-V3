@@ -19,12 +19,32 @@ router.post('/users', (req, res, next) => {
     }
   }
 
-  User
-    .create(req.body)
-    .then(user => res.status(201).location(`${req.originalUrl}${user.id}`).json(user))
+  // User
+  //   .create(req.body)
+  //   .then(user => res.status(201).location(`${req.originalUrl}${user.id}`).json(user))
+  //   .catch(err => {
+  //     if (err.code === 11000) {
+  //       err = new Error('The Tag name already exists');
+  //       err.status = 400;
+  //     }
+  //     next(err);
+  //   });
+
+  return User.hashPassword(req.body.password)
+    .then(digest => {
+      const newUser = {
+        username: req.body.username,
+        password: digest,
+        fullname: req.body.fullname
+      };
+      return User.create(newUser);
+    })
+    .then(result => {
+      return res.status(201).location(`/v3/users/${result.id}`).json(result);
+    })
     .catch(err => {
       if (err.code === 11000) {
-        err = new Error('The Tag name already exists');
+        err = new Error('The username already exists');
         err.status = 400;
       }
       next(err);

@@ -22,3 +22,5 @@ const localStrategy = new LocalStrategy((username, password, done) => {
       done(err);
     });
 });
+
+module.exports = localStrategy;

@@ -2,17 +2,17 @@
 
 const mongoose = require('mongoose');
 
-const userSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema({
   fullname: { type: String, index: true},
   username: { type: String, unique: true},
   password: { type: String}
 });
 
-userSchema.index({ name: 'text' });
+UserSchema.index({ name: 'text' });
 
 
 
-userSchema.set('toObject', {
+UserSchema.set('toObject', {
   transform: function (doc, ret) {
     ret.id = ret._id;
     delete ret._id;
@@ -21,6 +21,10 @@ userSchema.set('toObject', {
   }
 });
 
-const User = mongoose.model('User', userSchema);
+UserSchema.methods.validatePassword = function (password) {
+  return (password === this.password);
+};
+
+const User = mongoose.model('User', UserSchema);
 
 module.exports = User;

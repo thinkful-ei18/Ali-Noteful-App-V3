@@ -394,12 +394,27 @@ const noteful = (function () {
         password: loginForm.find('.js-password-entry').val()
       };
 
+      // api.create('/v3/login', loginUser)
+      //   .then(response => {
+      //     store.authorized = true;
+      //     loginForm[0].reset();
+
+      //     store.currentUser = response;
+
+      //     return Promise.all([
+      //       api.search('/v3/notes'),
+      //       api.search('/v3/folders'),
+      //       api.search('/v3/tags')
+      //     ]);
+      //   })
       api.create('/v3/login', loginUser)
         .then(response => {
-          store.authorized = true;
+          store.authToken = response.authToken; // <<== Add this...
+          store.authorized = true;  // <<== And this!
           loginForm[0].reset();
 
-          store.currentUser = response;
+          const payload = JSON.parse(atob(response.authToken.split('.')[1]));
+          store.currentUser = payload.user;
 
           return Promise.all([
             api.search('/v3/notes'),

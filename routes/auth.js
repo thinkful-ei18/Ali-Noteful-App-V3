@@ -7,6 +7,8 @@ const passport = require('passport');
 const options = { session: false, failWithError: true };
 const localAuth = passport.authenticate('local', options);
 
+const jwt = require('jsonwebtoken');
+
 
 router.post('/login', localAuth, (req, res) => {
   return res.json(req.user);

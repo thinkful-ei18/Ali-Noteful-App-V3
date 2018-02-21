@@ -9,9 +9,18 @@ const localAuth = passport.authenticate('local', options);
 
 const jwt = require('jsonwebtoken');
 
+const { JWT_SECRET, JWT_EXPIRY } = require('../config');
+
+function createAuthToken(user) {
+  return jwt.sign({ user }, JWT_SECRET, {
+    subject: user.username,
+    expiresIn: JWT_EXPIRY
+  });
+}
 
 router.post('/login', localAuth, (req, res) => {
-  return res.json(req.user);
+  const authToken = createAuthToken(req.user);
+  res.json({ authToken });
 });
 
 module.exports = router;

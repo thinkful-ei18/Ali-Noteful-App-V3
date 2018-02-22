@@ -11,7 +11,7 @@ const Note = require('../models/note');
 /* ========== GET/READ ALL ITEM ========== */
 router.get('/notes', (req, res, next) => {   
   const { searchTerm, folderId  } = req.query;
-
+  console.log(req.user.id);
   const userId = req.user.id;
   let filter = (folderId) ? {folderId, userId} : {userId};
   let projection = {};
@@ -63,7 +63,7 @@ router.get('/notes/:id', (req, res, next) => {
 router.post('/notes', (req, res, next) => {
   //Check if required fields present
 
-  const requiredFields = ['title', 'content', 'userId'];
+  const requiredFields = ['title', 'content'];
   for (let i = 0; i < requiredFields.length; i++) {
     const field = requiredFields[i];
     if (!(field in req.body)) {
@@ -101,13 +101,9 @@ router.post('/notes', (req, res, next) => {
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/notes/:id', (req, res, next) => {
+  const { id } = req.params;
+  const userId = req.user.id;
 
-  if (req.user.id !== req.body.userId) {
-    const message = (
-      'Body userId must match' +
-      ` request userID (${req.body.userId})`);
-    return res.status(400).json({ message: message });
-  }
 
   if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
     const message = (
@@ -136,8 +132,9 @@ router.put('/notes/:id', (req, res, next) => {
     }
   });
 
+  
   Note
-    .findByIdAndUpdate(req.params.id, { $set: toUpdate }, {new: true})
+    .findOneAndUpdate({ _id: id, userId }, toUpdate)
     .select('title content id folderId tags')
     .then(note => {
       res.json(note);

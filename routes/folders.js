@@ -9,14 +9,14 @@ const Note = require('../models/note');
 
 /* ========== GET/READ ALL ITEM ========== */
 router.get('/folders', (req, res, next) => {
-  const { searchTerm } = req.query;
-  let filter = {};
+  const userId = req.user.id;
+  let filter = {userId};
   let projection = {};
   let sort = 'created'; // default sorting
 
   Folder
     .find(filter, projection)
-    .select('name id')
+    .select('name id userId')
     .sort(sort)
     .then(folders => {
       res.json(folders);
@@ -27,6 +27,8 @@ router.get('/folders', (req, res, next) => {
 
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/folders/:id', (req, res, next) => {
+  const { id } = req.params;
+  const userId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     const err = new Error(`${req.params.id} is not a valid ID`);
@@ -36,8 +38,8 @@ router.get('/folders/:id', (req, res, next) => {
 
 
   Folder
-    .findById(req.params.id)
-    .select('name id')
+    .findOne({ _id: id, userId })
+    .select('name id userId')
     .then(folders => {
       if (folders) {
         res.json(folders);
@@ -53,6 +55,7 @@ router.get('/folders/:id', (req, res, next) => {
 
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/folders', (req, res, next) => {
+
   //Check if required fields present
   const requiredFields = ['name'];
   for (let i = 0; i < requiredFields.length; i++) {
@@ -67,6 +70,7 @@ router.post('/folders', (req, res, next) => {
   Folder
     .create({
       name: req.body.name,
+      userId: req.user.id
     })
     .then(folder => res.status(201).location(`${req.originalUrl}${folder.id}`).json(folder))
     .catch(err => {
@@ -80,6 +84,8 @@ router.post('/folders', (req, res, next) => {
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/folders/:id', (req, res, next) => {
+  const { id } = req.params;
+  const userId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     const err = new Error(`${req.params.id} is not a valid ID`);
@@ -103,7 +109,7 @@ router.put('/folders/:id', (req, res, next) => {
   };
 
   Folder
-    .findByIdAndUpdate(req.params.id, {$set: toUpdate}, {new: true})
+    .findOneAndUpdate({ _id: id, userId }, toUpdate, { new: true })
     .then(folder => res.json(folder))
     .catch(err => {
       if (err.code === 11000) {
@@ -128,7 +134,7 @@ router.delete('/folders/:id', (req, res, next) => {
 //     .catch(next);
 
   Note
-    .find({folderId : req.params.id})
+    .find({folderId : req.params.id, userId : req.user.id})
     .then((res) => {
       if(res.length > 0) {
         const err = new Error('Folder is being used by other notes');

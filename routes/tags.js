@@ -9,8 +9,9 @@ const Note = require('../models/note');
 
 /* ========== GET/READ ALL ITEM ========== */
 router.get('/Tags', (req, res, next) => {
+  const userId = req.user.id;
   const { searchTerm } = req.query;
-  let filter = {};
+  let filter = {userId};
   let projection = {};
   let sort = 'created'; // default sorting
 
@@ -27,6 +28,8 @@ router.get('/Tags', (req, res, next) => {
 
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/Tags/:id', (req, res, next) => {
+  const { id } = req.params;
+  const userId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     const err = new Error(`${req.params.id} is not a valid ID`);
@@ -36,8 +39,8 @@ router.get('/Tags/:id', (req, res, next) => {
 
 
   Tag
-    .findById(req.params.id)
-    .select('name id')
+    .findOne({ _id: id, userId })
+    .select('name id userId')
     .then(Tags => {
       if (Tags) {
         res.json(Tags);
@@ -67,6 +70,7 @@ router.post('/Tags', (req, res, next) => {
   Tag
     .create({
       name: req.body.name,
+      userId: req.user.id
     })
     .then(Tag => res.status(201).location(`${req.originalUrl}${Tag.id}`).json(Tag))
     .catch(err => {
@@ -80,6 +84,8 @@ router.post('/Tags', (req, res, next) => {
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/Tags/:id', (req, res, next) => {
+  const { id } = req.params;
+  const userId = req.user.id;
 
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     const err = new Error(`${req.params.id} is not a valid ID`);
@@ -103,7 +109,7 @@ router.put('/Tags/:id', (req, res, next) => {
   };
 
   Tag
-    .findByIdAndUpdate(req.params.id, { $set: toUpdate }, { new: true })
+    .findOneAndUpdate({ _id: id, userId }, toUpdate, { new: true })
     .then(Tag => Tag ? res.json(Tag) : next(Tag))
     .catch(err => {
       if (err.code === 11000) {
@@ -117,9 +123,8 @@ router.put('/Tags/:id', (req, res, next) => {
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/Tags/:id', (req, res, next) => {
 
-
   Tag
-    .findByIdAndRemove(req.params.id)
+    .findOneAndRemove({ _id: req.params.id, userId: req.user.id })
     .then(() => {
       return  Note
         .update({},

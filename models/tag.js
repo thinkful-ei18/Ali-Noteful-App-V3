@@ -3,7 +3,7 @@
 const mongoose = require('mongoose');
 
 const tagSchema = new mongoose.Schema({
-  name: { type: String, index: true, unique: true },
+  name: { type: String, index: true },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -12,6 +12,7 @@ const tagSchema = new mongoose.Schema({
 });
 
 tagSchema.index({ name: 'text' });
+tagSchema.index({ name: 1, userId: 1 }, { unique: true });
 
 
 

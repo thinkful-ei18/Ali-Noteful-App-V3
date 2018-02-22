@@ -24,7 +24,7 @@ const noteful = (function () {
   }
 
   function render() {
-
+    
     $('.signup-login').toggle(!store.authorized);
 
     const notesList = generateNotesList(store.notes, store.currentNote);

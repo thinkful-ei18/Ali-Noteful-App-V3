@@ -36,7 +36,7 @@ describe('Before and After hooks', function () {
     return mongoose.disconnect();
   });
 
-
+  
 
   describe('GET /v3/folders', function () {
 

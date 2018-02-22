@@ -12,7 +12,8 @@ const Note = require('../models/note');
 router.get('/notes', (req, res, next) => {   
   const { searchTerm, folderId  } = req.query;
 
-  let filter = (folderId) ? { folderId} : {};
+  const userId = req.user.id;
+  let filter = (folderId) ? {folderId, userId} : {userId};
   let projection = {};
   let sort = 'created'; 
 
@@ -25,7 +26,7 @@ router.get('/notes', (req, res, next) => {
   Note
     .find(filter, projection)
     .populate({path: 'tags', select: 'id'})
-    .select('title content created folderId tags')
+    .select('title content created folderId tags userId')
     .sort(sort)
     .then(notes => {
       res.json(notes);
@@ -35,15 +36,25 @@ router.get('/notes', (req, res, next) => {
 
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/notes/:id', (req, res, next) => {
-  Note
-    .findById(req.params.id)
-    .populate({path: 'tags', select: 'id'})
-    .select('title content folderId tags')
-    .then(notes => {
-      res.json(notes);
-    })
-    .catch(err => {
-      res.status(400).json({ message: 'The `id` is not valid' });
+  const { id } = req.params;
+  const userId = req.user.id;
+ 
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+
+  Note.findOne({ _id: id, userId })
+    .select('title content created folderId tags')
+    .populate('tags')
+    .then(result => {
+      if (result) {
+        res.json(result);
+      } else {
+        next();
+      }
     })
     .catch(next);
 });
@@ -51,7 +62,8 @@ router.get('/notes/:id', (req, res, next) => {
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/notes', (req, res, next) => {
   //Check if required fields present
-  const requiredFields = ['title', 'content'];
+
+  const requiredFields = ['title', 'content', 'userId'];
   for (let i = 0; i < requiredFields.length; i++) {
     const field = requiredFields[i];
     if (!(field in req.body)) {
@@ -63,7 +75,8 @@ router.post('/notes', (req, res, next) => {
   let obj = {
     title: req.body.title,
     content: req.body.content,
-    tags: (req.body.tags) ? req.body.tags : []
+    tags: (req.body.tags) ? req.body.tags : [],
+    userId: req.user.id
   };
 
   obj.tags.forEach(val => {
@@ -88,6 +101,13 @@ router.post('/notes', (req, res, next) => {
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/notes/:id', (req, res, next) => {
+
+  if (req.user.id !== req.body.userId) {
+    const message = (
+      'Body userId must match' +
+      ` request userID (${req.body.userId})`);
+    return res.status(400).json({ message: message });
+  }
 
   if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
     const message = (
@@ -127,8 +147,11 @@ router.put('/notes/:id', (req, res, next) => {
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/notes/:id', (req, res, next) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
   Note
-    .findById(req.params.id)
+    .findOne({ _id: id, userId })
     .then(() => {
       Note
         .findByIdAndRemove(req.params.id)

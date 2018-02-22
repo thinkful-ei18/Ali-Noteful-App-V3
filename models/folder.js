@@ -4,6 +4,11 @@ const mongoose = require('mongoose');
 
 const folderSchema = new mongoose.Schema({
   name: { type: String, index: true, unique: true },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
 });
 
 folderSchema.index({ name: 'text'});

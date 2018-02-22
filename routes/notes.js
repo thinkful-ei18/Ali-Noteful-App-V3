@@ -62,6 +62,8 @@ router.get('/notes/:id', (req, res, next) => {
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/notes', (req, res, next) => {
   //Check if required fields present
+  const {body: {title, content}, user: {id: userId}} = req;
+
 
   const requiredFields = ['title', 'content'];
   for (let i = 0; i < requiredFields.length; i++) {
@@ -73,10 +75,10 @@ router.post('/notes', (req, res, next) => {
   }
 
   let obj = {
-    title: req.body.title,
-    content: req.body.content,
+    title,
+    content,
     tags: (req.body.tags) ? req.body.tags : [],
-    userId: req.user.id
+    userId
   };
 
   obj.tags.forEach(val => {
@@ -134,7 +136,7 @@ router.put('/notes/:id', (req, res, next) => {
 
   
   Note
-    .findOneAndUpdate({ _id: id, userId }, toUpdate)
+    .findOneAndUpdate({ _id: id, userId }, toUpdate, {new: true})
     .select('title content id folderId tags')
     .then(note => {
       res.json(note);

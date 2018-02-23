@@ -9,10 +9,21 @@ const expect = chai.expect;
 const mongoose = require('mongoose');
 const { TEST_MONGODB_URI } = require('../config');
 const Folder = require('../models/folder');
-const seedFolders = require('../db/seed/folders');
+
+const User = require('../models/user');
+
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config');
 
 chai.use(chaiHttp);
 chai.use(chaiSpies);
+
+const fullname = 'Example User';
+const username = 'exampleUser';
+const password = 'examplePass';
+let id;
+let token;
+let seedFolders;
 
 
 
@@ -24,7 +35,36 @@ describe('Before and After hooks', function () {
   });
 
   beforeEach(function () {
-    return Folder.insertMany(seedFolders)
+    return User
+      .hashPassword(password)
+      .then(digest => User.create({ username, password: digest, fullname }))
+      .then(user => {
+        id = user.id;
+        token = jwt.sign({ user }, JWT_SECRET, { subject: user.username });
+        seedFolders = [
+          {
+            '_id': '111111111111111111111100',
+            'name': 'Archive',
+            'userId': id
+          },
+          {
+            '_id': '111111111111111111111101',
+            'name': 'Drafts',
+            'userId': id
+          },
+          {
+            '_id': '111111111111111111111102',
+            'name': 'Personal',
+            'userId': id
+          },
+          {
+            '_id': '111111111111111111111103',
+            'name': 'Work',
+            'userId': id
+          }
+        ];
+      })
+      .then(() => Folder.insertMany(seedFolders))
       .then(() => Folder.ensureIndexes());
   });
 
@@ -43,7 +83,9 @@ describe('Before and After hooks', function () {
     it('should return the correct number of Folders', function () {
       // 1) Call the database and the API
       const dbPromise = Folder.find();
-      const apiPromise = chai.request(app).get('/v3/Folders');
+      const apiPromise = chai.request(app)
+        .get('/v3/Folders')
+        .set('Authorization', `Bearer ${token}`);
 
       // 2) Wait for both promises to resolve using `Promise.all`
       return Promise.all([dbPromise, apiPromise])
@@ -68,14 +110,17 @@ describe('Before and After hooks', function () {
         .then(_data => {
           data = _data;
           // 2) **then** call the API
-          return chai.request(app).get(`/v3/Folders/${data.id}`);
+          return chai
+            .request(app)
+            .get(`/v3/Folders/${data.id}`)
+            .set('Authorization', `Bearer ${token}`);
         })
         .then((res) => {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
 
           expect(res.body).to.be.an('object');
-          expect(res.body).to.have.keys('id', 'name');
+          expect(res.body).to.have.keys('id', 'name', 'userId');
 
           // 3) **then** compare
           expect(res.body.id).to.equal(data.id);
@@ -84,7 +129,10 @@ describe('Before and After hooks', function () {
     });
 
     it('should return a message and error status 400 if id does not match mongoId', function () {
-      return chai.request(app).get('/v3/folders/1111111111111111111111000')
+      return chai
+        .request(app)
+        .get('/v3/folders/1111111111111111111111000')
+        .set('Authorization', `Bearer ${token}`)
         .catch(err => {
           const res = err.response; 
           expect(res).to.have.status(400);
@@ -93,7 +141,10 @@ describe('Before and After hooks', function () {
     });
 
     it('should return a 404 error is id is not valid', function () {
-      return chai.request(app).get('/v3/folders/111111111111111111111109')
+      return chai
+        .request(app)
+        .get('/v3/folders/111111111111111111111109')
+        .set('Authorization', `Bearer ${token}`)
         .catch(err => {
           const res = err.response;
           expect(res).to.have.status(404);
@@ -112,6 +163,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .post('/v3/folders')
         .send(newItem)
+        .set('Authorization', `Bearer ${token}`)
         .then(function (res) {
           body = res.body;
           expect(res).to.have.status(201);
@@ -137,6 +189,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .post('/v3/folders')
         .send(newItem)
+        .set('Authorization', `Bearer ${token}`)
         .then(spy)
         .then(() => {
           expect(spy).to.not.have.been.called();
@@ -157,6 +210,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .post('/v3/folders')
         .send(newItem)
+        .set('Authorization', `Bearer ${token}`)
         .then(spy)
         .then(() => {
           expect(spy).to.not.have.been.called();
@@ -181,6 +235,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .put('/v3/Folders/111111111111111111111100')
         .send(updateItem)
+        .set('Authorization', `Bearer ${token}`)
         .then(function (res) {
           body = res.body;
           expect(res).to.have.status(200);
@@ -205,6 +260,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .put(`/v3/Folders/${id}`)
         .send(updateItem)
+        .set('Authorization', `Bearer ${token}`)
         .catch(function (err) {
           const res = err.response;
           expect(res).to.have.status(400);
@@ -222,6 +278,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .put(`/v3/Folders/${id}`)
         .send(updateItem)
+        .set('Authorization', `Bearer ${token}`)
         .catch(function (err) {
           const res = err.response;
           expect(res).to.have.status(400);
@@ -238,6 +295,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .put(`/v3/Folders/${id}`)
         .send(updateItem)
+        .set('Authorization', `Bearer ${token}`)
         .catch(function (err) {
           const res = err.response;
           expect(res).to.have.status(400);
@@ -255,6 +313,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .put(`/v3/Folders/${id}`)
         .send(updateItem)
+        .set('Authorization', `Bearer ${token}`)
         .catch(function (err) {
           const res = err.response;
           expect(res).to.have.status(400);
@@ -269,6 +328,7 @@ describe('Before and After hooks', function () {
     it('should permanently delete an item', function () {
       return chai.request(app)
         .delete('/v3/Folders/111111111111111111111101')
+        .set('Authorization', `Bearer ${token}`)
         .then(function (res) {
           expect(res).to.have.status(204);
           return Folder.findById('111111111111111111111101');

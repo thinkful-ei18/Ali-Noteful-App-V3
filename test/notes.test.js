@@ -9,11 +9,24 @@ const expect = chai.expect;
 const mongoose = require('mongoose');
 const { TEST_MONGODB_URI } = require('../config');
 const Note = require('../models/note');
-const seedNotes = require('../db/seed/notes');
 
 chai.use(chaiHttp);
 chai.use(chaiSpies);
 
+const User = require('../models/user');
+
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config');
+
+chai.use(chaiHttp);
+chai.use(chaiSpies);
+
+const fullname = 'Example User';
+const username = 'exampleUser';
+const password = 'examplePass';
+let id;
+let token;
+let seedNotes;
 
 
 
@@ -24,7 +37,87 @@ describe('Before and After hooks', function () {
   });
 
   beforeEach(function () {
-    return Note.insertMany(seedNotes)
+    return User
+      .hashPassword(password)
+      .then(digest => User.create({ username, password: digest, fullname }))
+      .then(user => {
+        id = user.id;
+        token = jwt.sign({ user }, JWT_SECRET, { subject: user.username });
+        seedNotes = [
+          {
+            '_id': '000000000000000000000000',
+            'title': '5 life lessons learned from cats',
+            'content': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+            'folderId': '111111111111111111111100',
+            'tags': [
+              '222222222222222222222200',
+              '222222222222222222222201',
+              '222222222222222222222202'
+            ],
+            'userId': id
+          },
+          {
+            '_id': '000000000000000000000001',
+            'title': 'What the government doesnt want you to know about cats',
+            'content': 'Posuere sollicitudin aliquam ultrices sagittis orci a. Feugiat sed lectus vestibulum mattis ullamcorper velit. Odio pellentesque diam volutpat commodo sed egestas egestas fringilla. Velit egestas dui id ornare arcu odio. Molestie at elementum eu facilisis sed odio morbi. Tempor nec feugiat nisl pretium. At tempor commodo ullamcorper a lacus. Egestas dui id ornare arcu odio. Id cursus metus aliquam eleifend. Vitae sapien pellentesque habitant morbi tristique. Dis parturient montes nascetur ridiculus. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Aliquam faucibus purus in massa tempor nec feugiat nisl.',
+            'folderId': '111111111111111111111101',
+            'tags': [
+              '222222222222222222222200',
+              '222222222222222222222201',
+              '222222222222222222222202'
+            ],
+            'userId': id
+          },
+          {
+            '_id': '000000000000000000000002',
+            'title': 'The most boring article about cats youll ever read',
+            'content': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+            'folderId': '111111111111111111111102',
+            'tags': [
+              '222222222222222222222200',
+              '222222222222222222222201',
+              '222222222222222222222202'
+            ],
+            'userId': id
+          },
+          {
+            '_id': '000000000000000000000003',
+            'title': '7 things lady gaga has in common with cats',
+            'content': 'Posuere sollicitudin aliquam ultrices sagittis orci a. Feugiat sed lectus vestibulum mattis ullamcorper velit. Odio pellentesque diam volutpat commodo sed egestas egestas fringilla. Velit egestas dui id ornare arcu odio. Molestie at elementum eu facilisis sed odio morbi. Tempor nec feugiat nisl pretium. At tempor commodo ullamcorper a lacus. Egestas dui id ornare arcu odio. Id cursus metus aliquam eleifend. Vitae sapien pellentesque habitant morbi tristique. Dis parturient montes nascetur ridiculus. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Aliquam faucibus purus in massa tempor nec feugiat nisl.',
+            'folderId': '111111111111111111111102',
+            'tags': [
+              '222222222222222222222200',
+              '222222222222222222222202'
+            ],
+            'userId': id
+          },
+          {
+            '_id': '000000000000000000000004',
+            'title': 'The most incredible article about cats youll ever read',
+            'content': 'Lorem ipsum dolor sit amet, boring consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+            'userId': id
+          },
+          {
+            '_id': '000000000000000000000005',
+            'title': '10 ways cats can help you live to 100',
+            'content': 'Posuere sollicitudin aliquam ultrices sagittis orci a. Feugiat sed lectus vestibulum mattis ullamcorper velit. Odio pellentesque diam volutpat commodo sed egestas egestas fringilla. Velit egestas dui id ornare arcu odio. Molestie at elementum eu facilisis sed odio morbi. Tempor nec feugiat nisl pretium. At tempor commodo ullamcorper a lacus. Egestas dui id ornare arcu odio. Id cursus metus aliquam eleifend. Vitae sapien pellentesque habitant morbi tristique. Dis parturient montes nascetur ridiculus. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Aliquam faucibus purus in massa tempor nec feugiat nisl.',
+            'userId': id
+          },
+          {
+            '_id': '000000000000000000000006',
+            'title': '9 reasons you can blame the recession on cats',
+            'content': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+            'userId': id
+          },
+          {
+            '_id': '000000000000000000000007',
+            'title': '10 ways marketers are making you addicted to cats',
+            'content': 'Posuere sollicitudin aliquam ultrices sagittis orci a. Feugiat sed lectus vestibulum mattis ullamcorper velit. Odio pellentesque diam volutpat commodo sed egestas egestas fringilla. Velit egestas dui id ornare arcu odio. Molestie at elementum eu facilisis sed odio morbi. Tempor nec feugiat nisl pretium. At tempor commodo ullamcorper a lacus. Egestas dui id ornare arcu odio. Id cursus metus aliquam eleifend. Vitae sapien pellentesque habitant morbi tristique. Dis parturient montes nascetur ridiculus. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Aliquam faucibus purus in massa tempor nec feugiat nisl.',
+            'userId': id
+          }
+        ];
+      })
+      .then(() => Note.insertMany(seedNotes))
       .then(() => Note.ensureIndexes());
   });
 
@@ -43,7 +136,10 @@ describe('Before and After hooks', function () {
     it('should return the correct number of Notes', function () {
       // 1) Call the database and the API
       const dbPromise = Note.find();
-      const apiPromise = chai.request(app).get('/v3/notes');
+      const apiPromise = chai
+        .request(app)
+        .get('/v3/notes')
+        .set('Authorization', `Bearer ${token}`);
 
       // 2) Wait for both promises to resolve using `Promise.all`
       return Promise.all([dbPromise, apiPromise])
@@ -58,8 +154,10 @@ describe('Before and After hooks', function () {
 
     it('should find result by search term', function () {
       const search = 'way';
-      return chai.request(app)
+      return chai
+        .request(app)
         .get(`/v3/notes/?searchTerm=${search}`)
+        .set('Authorization', `Bearer ${token}`)
         .then( res => {
           expect(res.body).to.have.length(2);
         });
@@ -77,14 +175,17 @@ describe('Before and After hooks', function () {
         .then(_data => {
           data = _data;
           // 2) **then** call the API
-          return chai.request(app).get(`/v3/notes/${data.id}`);
+          return chai
+            .request(app)
+            .get(`/v3/notes/${data.id}`)
+            .set('Authorization', `Bearer ${token}`);
         })
         .then((res) => {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
 
           expect(res.body).to.be.an('object');
-          expect(res.body).to.have.keys('id', 'title', 'content', 'folderId', 'tags');
+          expect(res.body).to.have.keys('id', 'title', 'content', 'folderId', 'tags', 'created');
 
           // 3) **then** compare
           expect(res.body.id).to.equal(data.id);
@@ -104,9 +205,11 @@ describe('Before and After hooks', function () {
       };
       let body;
       // 1) First, call the API
-      return chai.request(app)
+      return chai
+        .request(app)
         .post('/v3/notes')
         .send(newItem)
+        .set('Authorization', `Bearer ${token}`)
         .then(function (res) {
           body = res.body;
           expect(res).to.have.status(201);
@@ -132,6 +235,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .post('/v3/notes')
         .send(newItem)
+        .set('Authorization', `Bearer ${token}`)
         .then(spy)
         .then(() => {
           expect(spy).to.not.have.been.called();
@@ -155,6 +259,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .post('/v3/notes')
         .send(newItem)
+        .set('Authorization', `Bearer ${token}`)
         .then(spy)
         .then(() => {
           expect(spy).to.not.have.been.called();
@@ -173,7 +278,10 @@ describe('Before and After hooks', function () {
     it('should respond with a 400 for improperly formatted id', function () {
       const badId = '99-99-99';
       const spy = chai.spy();
-      return chai.request(app).get(`/v3/notes/${badId}`)
+      return chai
+        .request(app)
+        .get(`/v3/notes/${badId}`)
+        .set('Authorization', `Bearer ${token}`)
         .then(spy)
         .then(() => {
           expect(spy).to.not.have.been.called();
@@ -200,6 +308,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .put('/v3/notes/000000000000000000000000')
         .send(updateItem)
+        .set('Authorization', `Bearer ${token}`)
         .then(function (res) {
           body = res.body;
           expect(res).to.have.status(200);
@@ -226,6 +335,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .put(`/v3/notes/${id}`)
         .send(updateItem)
+        .set('Authorization', `Bearer ${token}`)
         .catch(function (res) {
           expect(res).to.have.status(400);
           expect(res).to.be.a('error');
@@ -245,6 +355,7 @@ describe('Before and After hooks', function () {
       return chai.request(app)
         .put(`/v3/notes/${id}`)
         .send(newItem)
+        .set('Authorization', `Bearer ${token}`)
         .catch((err) => {
           const res = err.response;
           expect(res).to.have.status(400);
@@ -261,6 +372,7 @@ describe('Before and After hooks', function () {
     it('should permanently delete an item', function () {
       return chai.request(app)
         .delete('/v3/notes/000000000000000000000001')
+        .set('Authorization', `Bearer ${token}`)
         .then(function (res) {
           expect(res).to.have.status(204);
           return Note.findById('000000000000000000000001');

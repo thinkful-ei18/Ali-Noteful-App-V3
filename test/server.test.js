@@ -50,6 +50,7 @@ describe('Basic Express setup', () => {
       const spy = chai.spy();
       return chai.request(app)
         .get('/bad/path')
+        .set('Authorization', `Bearer ${'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7InVzZXJuYW1lIjoiMkFsaSIsImZ1bGxuYW1lIjoiMkFsaSIsImlkIjoiNWE5MDRjMzI4NDVlODQ2YTg3ZjdlZWFkIn0sImlhdCI6MTUxOTQxNDcwMiwiZXhwIjoxNTIwMDE5NTAyLCJzdWIiOiIyQWxpIn0.bdc1NkBs1XmFxe8_p8-cRwiw9wul8o4D_zZa_sagK04'}`)
         .then(spy)
         .then(() => {
           expect(spy).to.not.have.been.called();
